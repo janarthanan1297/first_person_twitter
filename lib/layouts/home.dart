@@ -26,6 +26,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    debugPrint(widget.dob);
   }
 
   @override
@@ -205,7 +206,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                 ),
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).push(CreateRoute(page: Profile()));
+                    Navigator.of(context).push(CreateRoute(page: Profile(dob: widget.dob)));
                   },
                   child: Container(
                     padding: EdgeInsets.only(left: 16, bottom: 30),
@@ -418,10 +419,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           Duration difference = currentime.difference(time);
                           var hour = difference.inHours;
                           var inDay;
+                          var inMin;
                           if (hour > 24) {
                             inDay = difference.inDays;
                           }
-                          return Column(
+                          if (hour <= 0) {
+                            inMin = difference.inMinutes;
+                          }
+                          return Wrap(
                             children: [
                               Container(
                                 padding: EdgeInsets.only(top: 0, left: 15, right: 15),
@@ -474,7 +479,12 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                                 ),
                                               ),
                                               Spacer(),
-                                              Text((hour > 24) ? '$inDay' + 'd' : '$hour' + 'h',
+                                              Text(
+                                                  (hour > 24)
+                                                      ? '$inDay' + 'd'
+                                                      : (hour <= 0)
+                                                          ? '$inMin' + 'min'
+                                                          : '$hour' + 'h',
                                                   style: TextStyle(
                                                       fontFamily: "IBM", fontSize: 15, color: Color(0xff8a8989), fontWeight: FontWeight.w500)),
                                               SizedBox(

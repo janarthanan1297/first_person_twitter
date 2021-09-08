@@ -12,96 +12,104 @@ class MyNavigationBar extends StatefulWidget {
 
 class _MyNavigationBarState extends State<MyNavigationBar> {
   int _selectedIndex = 0;
-  List<Widget> _widgetOptions = <Widget>[
-    Home(),
-    Container(
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.only(top: 40),
-            child: FaIcon(
-              FontAwesomeIcons.twitter,
-              color: Colors.blue[100],
-              size: 150,
-            ),
-          ),
-          Text(
-            'Coming Soon',
-            style: TextStyle(
-              fontFamily: "IBM",
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.left,
-          ),
-          SizedBox(
-            height: 10,
-          ),
-        ],
+  List<Widget> _widgetOptions;
+  @override
+  void initState() {
+    super.initState();
+    debugPrint(widget.dob);
+    _widgetOptions = <Widget>[
+      Home(
+        dob: widget.dob,
       ),
-    ),
-    Container(
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.only(top: 40),
-            child: FaIcon(
-              FontAwesomeIcons.twitter,
-              color: Colors.blue[100],
-              size: 150,
+      Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.only(top: 40),
+              child: FaIcon(
+                FontAwesomeIcons.twitter,
+                color: Colors.blue[100],
+                size: 150,
+              ),
             ),
-          ),
-          Text(
-            'Coming Soon',
-            style: TextStyle(
-              fontFamily: "IBM",
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                fontFamily: "IBM",
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
             ),
-            textAlign: TextAlign.left,
-          ),
-          SizedBox(
-            height: 10,
-          ),
-        ],
+            SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
       ),
-    ),
-    Container(
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: EdgeInsets.only(top: 40),
-            child: FaIcon(
-              FontAwesomeIcons.twitter,
-              color: Colors.blue[100],
-              size: 150,
+      Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.only(top: 40),
+              child: FaIcon(
+                FontAwesomeIcons.twitter,
+                color: Colors.blue[100],
+                size: 150,
+              ),
             ),
-          ),
-          Text(
-            'Coming Soon',
-            style: TextStyle(
-              fontFamily: "IBM",
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                fontFamily: "IBM",
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
             ),
-            textAlign: TextAlign.left,
-          ),
-          SizedBox(
-            height: 10,
-          ),
-        ],
+            SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
       ),
-    ),
-  ];
+      Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.only(top: 40),
+              child: FaIcon(
+                FontAwesomeIcons.twitter,
+                color: Colors.blue[100],
+                size: 150,
+              ),
+            ),
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                fontFamily: "IBM",
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            SizedBox(
+              height: 10,
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

@@ -1,4 +1,3 @@
-import 'package:email_auth/email_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:first_person_twitter/layouts/landing.dart';
 import 'package:first_person_twitter/layouts/navigation.dart';
@@ -28,9 +27,7 @@ class _VerificationState extends State<Verification> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    setState(() {
-      sendOtp();
-    });
+    setState(() {});
 
     _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 300));
     _animation = Tween(begin: 400.0, end: 150.0).animate(_controller)
@@ -60,33 +57,6 @@ class _VerificationState extends State<Verification> with SingleTickerProviderSt
         _controller.reverse();
       }
     });
-  }
-
-  void verify() {
-    var check = EmailAuth.validate(recieverMail: widget.email, userOTP: otp.text);
-    if (check) {
-      Navigator.push(
-          context,
-          new MaterialPageRoute(
-              builder: (context) => Password(
-                    email: widget.email,
-                    name: widget.name,
-                    dob: widget.dob,
-                  )));
-    } else {
-      Fluttertoast.showToast(msg: 'Invalid OTP', toastLength: Toast.LENGTH_SHORT, gravity: ToastGravity.BOTTOM);
-    }
-  }
-
-  void sendOtp() async {
-    EmailAuth.sessionName = "1-Person Twitter";
-    bool result = await EmailAuth.sendOtp(recieverMail: 'rsrjjana12@gmail.com');
-    debugPrint('yesssss');
-    if (result) {
-      setState(() {
-        submitValid = true;
-      });
-    }
   }
 
   @override
@@ -239,9 +209,7 @@ class _VerificationState extends State<Verification> with SingleTickerProviderSt
                   children: [
                     Divider(),
                     GestureDetector(
-                      onTap: () {
-                        verify();
-                      },
+                      onTap: () {},
                       child: new Align(
                           alignment: FractionalOffset.bottomRight,
                           child: Padding(

@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.first_person_twitter">
+      <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
    <application
         android:label="first_person_twitter"
         android:icon="@mipmap/ic_launcher">

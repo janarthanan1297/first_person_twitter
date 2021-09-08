@@ -21,9 +21,6 @@ class _AddTweetState extends State<AddTweet> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    var list = new List<int>.generate(10000000, (int index) => index);
-    list.shuffle();
-    id = list[0];
   }
 
   @override
@@ -34,6 +31,9 @@ class _AddTweetState extends State<AddTweet> with SingleTickerProviderStateMixin
 
   upload() async {
     _currenttime = new DateTime.now();
+    var list = new List<int>.generate(10000000, (int index) => index);
+    list.shuffle();
+    id = list[0];
     profile = (profile == null ? "https://i.stack.imgur.com/l60Hf.png" : profile);
     await FirebaseFirestore.instance
         .collection('timeline')

@@ -25,9 +25,6 @@ class _EditTweetState extends State<EditTweet> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    var list = new List<int>.generate(10000000, (int index) => index);
-    list.shuffle();
-    id = list[0];
     tweet..text = widget.tweet;
     words = 280 - tweet.text.length;
   }
@@ -39,6 +36,10 @@ class _EditTweetState extends State<EditTweet> with SingleTickerProviderStateMix
   }
 
   update() async {
+    var list = new List<int>.generate(10000000, (int index) => index);
+    list.shuffle();
+    id = list[0];
+
     _currenttime = new DateTime.now();
     profile = (profile == null ? "https://i.stack.imgur.com/l60Hf.png" : profile);
     var doc1 = widget.docid;

@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:first_person_twitter/layouts/addtweet.dart';
+import 'package:intl/intl.dart';
 import 'package:first_person_twitter/layouts/animation.dart';
 import 'package:first_person_twitter/layouts/edittweet.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +8,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 class Profile extends StatefulWidget {
-  const Profile({Key key}) : super(key: key);
+  final dob;
+  const Profile({Key key, this.dob}) : super(key: key);
 
   @override
   _ProfileState createState() => _ProfileState();
@@ -158,7 +159,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                       width: 10,
                     ),
                     Text(
-                      'Born September 12,1997',
+                      'Born ' + widget.dob,
                       style: TextStyle(
                         fontFamily: "IBM",
                         fontSize: 16,
@@ -467,10 +468,14 @@ class _TabWidgetState extends State<TabWidget> with SingleTickerProviderStateMix
                       Duration difference = currentime.difference(time);
                       var hour = difference.inHours;
                       var inDay;
+                      var inMin;
                       if (hour > 24) {
                         inDay = difference.inDays;
                       }
-                      return Column(
+                      if (hour <= 0) {
+                        inMin = difference.inMinutes;
+                      }
+                      return Wrap(
                         children: [
                           Container(
                             padding: EdgeInsets.only(
@@ -526,7 +531,12 @@ class _TabWidgetState extends State<TabWidget> with SingleTickerProviderStateMix
                                             ),
                                           ),
                                           Spacer(),
-                                          Text((hour > 24) ? '$inDay' + 'd' : '$hour' + 'h',
+                                          Text(
+                                              (hour > 24)
+                                                  ? '$inDay' + 'd'
+                                                  : (hour <= 0)
+                                                      ? '$inMin' + 'min'
+                                                      : '$hour' + 'h',
                                               style:
                                                   TextStyle(fontFamily: "IBM", fontSize: 15, color: Color(0xff8a8989), fontWeight: FontWeight.w500)),
                                           PopupMenuButton(
