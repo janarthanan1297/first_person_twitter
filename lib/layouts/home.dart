@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:first_person_twitter/layouts/addtweet.dart';
 import 'package:first_person_twitter/layouts/animation.dart';
 import 'package:first_person_twitter/layouts/landing.dart';
 import 'package:first_person_twitter/layouts/profile.dart';
-import 'package:first_person_twitter/main.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -31,7 +29,6 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
     return Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,

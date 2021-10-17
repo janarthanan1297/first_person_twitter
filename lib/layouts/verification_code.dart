@@ -5,7 +5,6 @@ import 'package:first_person_twitter/layouts/privacy_page.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class Verification extends StatefulWidget {
   final name, email, dob;
@@ -70,7 +69,7 @@ class _VerificationState extends State<Verification> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
+    //var size = MediaQuery.of(context).size;
     return Scaffold(
       body: SingleChildScrollView(
         child: Container(

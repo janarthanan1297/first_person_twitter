@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:first_person_twitter/layouts/animation.dart';
 import 'package:first_person_twitter/layouts/edittweet.dart';
+import 'package:first_person_twitter/layouts/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -16,10 +19,13 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
-  String profile = FirebaseAuth.instance.currentUser.photoURL;
   String user = FirebaseAuth.instance.currentUser.displayName;
   String email = FirebaseAuth.instance.currentUser.email;
   TabController tabController;
+  UploadTask task;
+  File file;
+  bool isLoading = false;
+  ValueNotifier<String> profile = ValueNotifier<String>(FirebaseAuth.instance.currentUser.photoURL);
 
   @override
   void initState() {
@@ -27,354 +33,402 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     tabController = TabController(length: 4, vsync: this);
   }
 
+  Future selectFile() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: false, type: FileType.image);
+
+    if (result == null) return;
+    final path = result.files.single.path;
+
+    setState(() => file = File(path));
+    if (file == null) return;
+    setState(() async {
+      //isLoading = true;
+      final Reference storageReference = FirebaseStorage.instance.ref().child("$user/profile}");
+      await storageReference.putFile(file).whenComplete(() async {
+        await storageReference.getDownloadURL().then((value) {
+          User user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            setState(() async {
+              var result = await FirebaseFirestore.instance.collection("timeline").where("email", isEqualTo: "$email").get();
+              result.docs.forEach((res) async {
+                await FirebaseFirestore.instance.collection('timeline').doc(res['id']).update({'profile': value});
+                await FirebaseFirestore.instance.collection('$email').doc(res.id).update({'profile': value});
+              });
+              var result2 = await FirebaseFirestore.instance.collection("$email").where("email", isEqualTo: "$email").get();
+              result2.docs.forEach((res2) async {
+                await FirebaseFirestore.instance.collection('$email').doc(res2.id).update({'profile': value});
+              });
+              await user.updateProfile(photoURL: value);
+              profile.value = value;
+              /*  Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => MyNavigationBar()),
+              ); */
+            });
+          }
+        });
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 200,
-                child: Stack(
+        body: isLoading
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Positioned(
-                      top: 0,
-                      height: 150,
-                      width: MediaQuery.of(context).size.width,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          image:
-                              DecorationImage(image: NetworkImage('https://onlytech.com/wp-content/uploads/2021/04/Twitter.jpg'), fit: BoxFit.cover),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                        top: 35,
-                        left: 15,
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.black54,
-                          child: IconButton(
-                            icon: Icon(Icons.arrow_back),
-                            iconSize: 20,
-                            color: Colors.white,
-                            splashColor: Colors.blue,
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                        )),
-                    Positioned(
-                        top: 35,
-                        right: 15,
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.black54,
-                          child: IconButton(
-                            icon: Icon(Icons.more_vert),
-                            iconSize: 20,
-                            color: Colors.white,
-                            splashColor: Colors.blue,
-                            onPressed: () {},
-                          ),
-                        )),
-                    Positioned(
-                      top: 120,
-                      left: 15,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(width: 4, color: Theme.of(context).scaffoldBackgroundColor),
-                          // boxShadow: [BoxShadow(spreadRadius: 2, blurRadius: 10, color: Colors.black.withOpacity(0.1), offset: Offset(0, 10))],
-                        ),
-                        child: CircleAvatar(
-                          backgroundImage: NetworkImage(profile == null ? "https://i.stack.imgur.com/l60Hf.png" : profile),
-                          radius: 35,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 160,
-                      right: 15,
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
-                        width: 125,
-                        height: 40,
-                        child: Text(
-                          "Edit profile",
-                          style: TextStyle(
-                            fontFamily: "IBM",
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.left,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15, top: 10, right: 15),
-                alignment: Alignment.centerLeft,
-                // decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
-
-                child: Text(
-                  user,
-                  style: TextStyle(
-                    fontFamily: "IBM",
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.left,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15, bottom: 20, right: 15),
-
-                alignment: Alignment.centerLeft,
-                // decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
-
-                child: Text(
-                  '@' + email.substring(0, email.toString().lastIndexOf('@')),
-                  style: TextStyle(fontFamily: "IBM", fontSize: 16, color: Color(0xff8a8989), fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.left,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15, bottom: 0, right: 15),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.birthdayCake,
-                      color: Color(0xff55636c),
-                      size: 17,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Born ' + widget.dob,
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 16,
-                        color: Color(0xff55636c),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15, bottom: 10, right: 15),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.calendarAlt,
-                      color: Color(0xff55636c),
-                      size: 17,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Text(
-                      'Joined August 2021',
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 16,
-                        color: Color(0xff55636c),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15, bottom: 20, right: 15),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      '0',
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    SizedBox(
-                      width: 05,
-                    ),
-                    Text(
-                      'Following',
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 16,
-                        color: Color(0xff55636c),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    SizedBox(
-                      width: 20,
-                    ),
-                    Text(
-                      '0',
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    SizedBox(
-                      width: 05,
-                    ),
-                    Text(
-                      'Followers',
-                      style: TextStyle(
-                        fontFamily: "IBM",
-                        fontSize: 16,
-                        color: Color(0xff55636c),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.only(left: 15),
-                child: TabBar(
-                  enableFeedback: false,
-                  isScrollable: true,
-                  indicatorColor: Colors.blue,
-                  controller: tabController,
-                  labelColor: Colors.black,
-                  labelStyle: TextStyle(
-                    fontFamily: "IBM",
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  unselectedLabelColor: Color(0xff55636c),
-                  unselectedLabelStyle: TextStyle(
-                    fontFamily: "IBM",
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  tabs: [
-                    Text("Tweets"),
-                    Text("Tweets & replies"),
-                    Text("Media"),
-                    Text("Likes"),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: TabBarView(
-                  controller: tabController,
-                  children: [
-                    TabWidget(),
                     Container(
-                      alignment: Alignment.center,
-                      child: Column(
+                      height: 200,
+                      child: Stack(
                         children: [
-                          Container(
-                            padding: EdgeInsets.only(top: 40),
-                            child: FaIcon(
-                              FontAwesomeIcons.solidCommentAlt,
-                              color: Colors.blue[100],
-                              size: 150,
+                          Positioned(
+                            top: 0,
+                            height: 150,
+                            width: MediaQuery.of(context).size.width,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                    image: NetworkImage('https://onlytech.com/wp-content/uploads/2021/04/Twitter.jpg'), fit: BoxFit.cover),
+                              ),
                             ),
                           ),
-                          Text(
-                            'No Tweets & Replies',
-                            style: TextStyle(
-                              fontFamily: "IBM",
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            textAlign: TextAlign.left,
+                          Positioned(
+                              top: 35,
+                              left: 15,
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.black54,
+                                child: IconButton(
+                                  icon: Icon(Icons.arrow_back),
+                                  iconSize: 20,
+                                  color: Colors.white,
+                                  splashColor: Colors.blue,
+                                  onPressed: () {
+                                    Navigator.of(context).pushReplacement(CreateRoute2(page: MyNavigationBar()));
+                                  },
+                                ),
+                              )),
+                          Positioned(
+                              top: 35,
+                              right: 15,
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: Colors.black54,
+                                child: IconButton(
+                                  icon: Icon(Icons.more_vert),
+                                  iconSize: 20,
+                                  color: Colors.white,
+                                  splashColor: Colors.blue,
+                                  onPressed: () {},
+                                ),
+                              )),
+                          Positioned(
+                            top: 120,
+                            left: 15,
+                            child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(width: 4, color: Theme.of(context).scaffoldBackgroundColor),
+                                  // boxShadow: [BoxShadow(spreadRadius: 2, blurRadius: 10, color: Colors.black.withOpacity(0.1), offset: Offset(0, 10))],
+                                ),
+                                child: ValueListenableBuilder(
+                                    valueListenable: profile,
+                                    builder: (context, String profile, child) {
+                                      return CircleAvatar(
+                                        backgroundImage: NetworkImage(profile == null ? "https://i.stack.imgur.com/l60Hf.png" : profile),
+                                        radius: 35,
+                                      );
+                                    })),
                           ),
-                          SizedBox(
-                            height: 10,
+                          Positioned(
+                            top: 160,
+                            right: 15,
+                            child: GestureDetector(
+                              onTap: selectFile,
+                              child: Container(
+                                alignment: Alignment.center,
+                                decoration:
+                                    BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
+                                width: 125,
+                                height: 40,
+                                child: Text(
+                                  "Edit profile",
+                                  style: TextStyle(
+                                    fontFamily: "IBM",
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      alignment: Alignment.center,
-                      child: Column(
+                      padding: EdgeInsets.only(left: 15, top: 10, right: 15),
+                      alignment: Alignment.centerLeft,
+                      // decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
+
+                      child: Text(
+                        user,
+                        style: TextStyle(
+                          fontFamily: "IBM",
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(left: 15, bottom: 20, right: 15),
+
+                      alignment: Alignment.centerLeft,
+                      // decoration: BoxDecoration(borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.grey[350], width: 1)),
+
+                      child: Text(
+                        '@' + email.substring(0, email.toString().lastIndexOf('@')),
+                        style: TextStyle(fontFamily: "IBM", fontSize: 16, color: Color(0xff8a8989), fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(left: 15, bottom: 0, right: 15),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: EdgeInsets.only(top: 40),
-                            child: FaIcon(
-                              FontAwesomeIcons.photoVideo,
-                              color: Colors.blue[100],
-                              size: 150,
-                            ),
-                          ),
-                          Text(
-                            'No Media',
-                            style: TextStyle(
-                              fontFamily: "IBM",
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            textAlign: TextAlign.left,
+                          FaIcon(
+                            FontAwesomeIcons.birthdayCake,
+                            color: Color(0xff55636c),
+                            size: 17,
                           ),
                           SizedBox(
-                            height: 10,
+                            width: 10,
+                          ),
+                          Text(
+                            'Born ', //+ widget.dob,
+                            style: TextStyle(
+                              fontFamily: "IBM",
+                              fontSize: 16,
+                              color: Color(0xff55636c),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.left,
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      alignment: Alignment.center,
-                      child: Column(
+                      padding: EdgeInsets.only(left: 15, bottom: 10, right: 15),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: EdgeInsets.only(top: 40),
-                            child: FaIcon(
-                              FontAwesomeIcons.solidThumbsUp,
-                              color: Colors.blue[100],
-                              size: 150,
-                            ),
+                          FaIcon(
+                            FontAwesomeIcons.calendarAlt,
+                            color: Color(0xff55636c),
+                            size: 17,
+                          ),
+                          SizedBox(
+                            width: 10,
                           ),
                           Text(
-                            'No Likes',
+                            'Joined August 2021',
                             style: TextStyle(
                               fontFamily: "IBM",
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              color: Color(0xff55636c),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(left: 15, bottom: 20, right: 15),
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            '0',
+                            style: TextStyle(
+                              fontFamily: "IBM",
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
                             ),
                             textAlign: TextAlign.left,
                           ),
                           SizedBox(
-                            height: 10,
+                            width: 05,
+                          ),
+                          Text(
+                            'Following',
+                            style: TextStyle(
+                              fontFamily: "IBM",
+                              fontSize: 16,
+                              color: Color(0xff55636c),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          Text(
+                            '0',
+                            style: TextStyle(
+                              fontFamily: "IBM",
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                          SizedBox(
+                            width: 05,
+                          ),
+                          Text(
+                            'Followers',
+                            style: TextStyle(
+                              fontFamily: "IBM",
+                              fontSize: 16,
+                              color: Color(0xff55636c),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.left,
                           ),
                         ],
                       ),
-                    )
+                    ),
+                    Container(
+                      padding: EdgeInsets.only(left: 15),
+                      child: TabBar(
+                        enableFeedback: false,
+                        isScrollable: true,
+                        indicatorColor: Colors.blue,
+                        controller: tabController,
+                        labelColor: Colors.black,
+                        labelStyle: TextStyle(
+                          fontFamily: "IBM",
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        unselectedLabelColor: Color(0xff55636c),
+                        unselectedLabelStyle: TextStyle(
+                          fontFamily: "IBM",
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        tabs: [
+                          Text("Tweets"),
+                          Text("Tweets & replies"),
+                          Text("Media"),
+                          Text("Likes"),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: tabController,
+                        children: [
+                          TabWidget(),
+                          Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.only(top: 40),
+                                  child: FaIcon(
+                                    FontAwesomeIcons.solidCommentAlt,
+                                    color: Colors.blue[100],
+                                    size: 150,
+                                  ),
+                                ),
+                                Text(
+                                  'No Tweets & Replies',
+                                  style: TextStyle(
+                                    fontFamily: "IBM",
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.only(top: 40),
+                                  child: FaIcon(
+                                    FontAwesomeIcons.photoVideo,
+                                    color: Colors.blue[100],
+                                    size: 150,
+                                  ),
+                                ),
+                                Text(
+                                  'No Media',
+                                  style: TextStyle(
+                                    fontFamily: "IBM",
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            alignment: Alignment.center,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.only(top: 40),
+                                  child: FaIcon(
+                                    FontAwesomeIcons.solidThumbsUp,
+                                    color: Colors.blue[100],
+                                    size: 150,
+                                  ),
+                                ),
+                                Text(
+                                  'No Likes',
+                                  style: TextStyle(
+                                    fontFamily: "IBM",
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
         floatingActionButton: FancyFab());
   }
 }
@@ -389,21 +443,6 @@ class _TabWidgetState extends State<TabWidget> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-  }
-
-  void SelectedItem(BuildContext context, item) {
-    switch (item) {
-      case 0:
-        print("Settings Clicked");
-        break;
-      case 1:
-        print("Privacy Clicked");
-        break;
-      case 2:
-        print("User Logged out");
-
-        break;
-    }
   }
 
   @override

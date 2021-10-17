@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:first_person_twitter/layouts/landing.dart';
 import 'package:first_person_twitter/layouts/navigation.dart';
-import 'package:first_person_twitter/layouts/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
